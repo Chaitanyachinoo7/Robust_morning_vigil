@@ -146,7 +146,7 @@ export default function App() {
         <div>
           <h1 className="serif text-4xl font-medium text-sage italic">Global Morning Vigil</h1>
           <p className="text-clay text-sm font-medium tracking-widest uppercase mt-1">
-            {format(new Date(), 'EEEE, MMMM do')}
+            {format(new Date(), 'EEEE, MMMM do, yyyy')} | {new Date().toISOString().split('T')[1].slice(0, 5)} UTC
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -203,16 +203,21 @@ export default function App() {
               ) : summary && (
                 <>
                   <Card className="bg-sage/5 border-sage/10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 text-sage">
-                        <AlertTriangle size={18} />
-                        <span className="text-xs font-bold uppercase tracking-widest">24-Hour Global Impact</span>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 text-sage">
+                          <AlertTriangle size={18} />
+                          <span className="text-xs font-bold uppercase tracking-widest">24-Hour Global Impact</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-1 text-sage font-bold text-xl">
+                            <Skull size={20} />
+                            {summary.totalEstimated}
+                          </div>
+                          <span className="text-[10px] text-clay uppercase tracking-widest font-medium">
+                            Updated: {format(new Date(summary.timestamp), 'HH:mm')} UTC
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-sage font-bold text-xl">
-                        <Skull size={20} />
-                        {summary.totalEstimated}
-                      </div>
-                    </div>
                     <p className="text-ink/80 leading-relaxed italic border-l-2 border-sage/20 pl-4">
                       {summary.overallAnalysis}
                     </p>

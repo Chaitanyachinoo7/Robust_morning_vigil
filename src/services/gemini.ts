@@ -17,17 +17,29 @@ export interface GlobalVigilSummary {
 }
 
 export async function getGlobalFatalitySummary(): Promise<GlobalVigilSummary> {
-  const now = new Date().toISOString();
+  const now = new Date();
+  const nowISO = now.toISOString();
+  const nowUTC = now.toUTCString();
+  
   const prompt = `
-    Search for global news reports from the last 24 hours (strictly since ${now}) regarding fatalities in these categories:
-    1. Accidents (Road, Air, Industrial)
-    2. Killings & Crime
-    3. Terrorist Attacks
-    4. Natural Calamities (Floods, Earthquakes, etc.)
-    5. Disease Deaths (Major outbreaks or significant daily stats)
+    CURRENT UTC TIME: ${nowUTC}.
+    STRICT SEARCH WINDOW: Last 24 hours (since ${nowISO}).
     
-    Provide a structured summary including estimated counts where reported by major news agencies. 
-    Be objective and cite sources where possible.
+    Perform an exhaustive search of global news agencies (international, national, and local/regional) for reports of fatalities occurring strictly within this 24-hour window in MARCH 2026.
+    
+    You must "rope in" news from every nook and corner of the world, covering:
+    1. Crime & Homicide (including specific reports of stabbings, shootings, and violent theft)
+    2. Accidents (Road, Rail, Air, Maritime, and Industrial)
+    3. Terrorist Attacks & Armed Conflicts
+    4. Natural Calamities (Floods, Storms, Earthquakes, Landslides)
+    5. Disease Outbreaks & Health Emergencies (Significant daily death tolls or new outbreak fatalities)
+    
+    For each category, provide:
+    - An estimated fatality count based on aggregated reports.
+    - A concise summary of the major incidents.
+    - Direct links to the reporting news agencies (prioritize diverse regional sources).
+    
+    IMPORTANT: Ensure all data is strictly from the last 24 hours of the present time in 2026. Do not include historical data.
   `;
 
   const response = await ai.models.generateContent({
