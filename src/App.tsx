@@ -101,6 +101,14 @@ export default function App() {
     fetchSummary();
   }, []);
 
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchSummary();
+    }, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('vigil_journal', JSON.stringify(entries));
   }, [entries]);

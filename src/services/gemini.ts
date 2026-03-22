@@ -31,14 +31,14 @@ export async function getGlobalFatalitySummary(): Promise<GlobalVigilSummary> {
     - CURRENT TIME (END): ${nowUTC} (${nowISO})
     - START TIME (24H AGO): ${startTimeUTC} (${startTimeISO})
     
-    TASK: Perform an exhaustive search of global news agencies for reports of fatalities occurring STICKTLY within this 24-hour window in the year 2026.
+    TASK: Perform an exhaustive search of global news agencies for reports of fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year 2026.
     
     STRICT EXCLUSION RULES:
-    1. DO NOT include any event that occurred before ${startTimeISO}.
+    1. DO NOT include any event that occurred before ${startTimeISO}, even if it is being reported now for the first time.
     2. DO NOT include any data from 2025 or earlier. All results MUST be from March 2026.
-    3. DO NOT include "ongoing" death tolls unless there are specific NEW fatalities reported in the last 24 hours.
+    3. DO NOT include "ongoing" death tolls unless there are specific NEW fatalities that OCCURRED in the last 24 hours.
     4. DO NOT include historical data or summaries of past weeks/months.
-    5. VERIFY the publication timestamp of every source. If it was published before ${startTimeISO}, DISCARD IT.
+    5. VERIFY the actual time of the incident. If the event occurred before ${startTimeISO}, DISCARD IT.
     6. STRICTLY EXCLUDE natural deaths, passings due to old age, or deaths from long-term chronic illnesses. This app is for monitoring sudden, tragic, or preventable global fatalities.
     
     ROPE IN NEWS FROM EVERY NOOK AND CORNER:
@@ -46,11 +46,11 @@ export async function getGlobalFatalitySummary(): Promise<GlobalVigilSummary> {
     - Crime & Homicide (stabbings, shootings, violent theft - EXCLUDE any incidents with terrorist or extremist motives).
     - Accidents (Road, Rail, Air, Maritime, Industrial)
     - Terrorist Attacks & Armed Conflicts (ALL incidents with terrorist, extremist, or insurgent motives MUST be categorized here).
-    - Natural Calamities (New reports only)
-    - Disease Outbreaks (New daily tolls only)
+    - Natural Calamities (Incidents occurring in the last 24h only)
+    - Disease Outbreaks (New fatalities occurring in the last 24h only)
     
     For each category, provide:
-    - An estimated fatality count based on aggregated reports from the LAST 24 HOURS ONLY.
+    - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY.
     - A concise summary of the major incidents.
     - Direct links to the reporting news agencies (prioritize diverse regional sources).
   `;
