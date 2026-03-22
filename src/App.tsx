@@ -145,15 +145,21 @@ export default function App() {
       <header className="flex justify-between items-start mb-4">
         <div>
           <h1 className="serif text-4xl font-medium text-sage italic">Global Morning Vigil</h1>
-          <div className="flex flex-col mt-1">
-            <p className="text-clay text-sm font-medium tracking-widest uppercase">
-              {format(new Date(), 'EEEE, MMMM do, yyyy')} | {new Date().toISOString().split('T')[1].slice(0, 5)} UTC
-            </p>
-            <p className="text-[10px] text-clay/60 font-medium tracking-widest uppercase mt-0.5">
-              Monitoring Window: {format(new Date(new Date().getTime() - 24 * 60 * 60 * 1000), 'HH:mm')} - {format(new Date(), 'HH:mm')} UTC
-            </p>
-            <p className="text-[9px] text-clay/40 font-bold tracking-widest uppercase mt-0.5">
-              Sudden & Tragic Fatalities Only
+          <div className="flex flex-col mt-2">
+            <div className="flex items-center gap-2">
+              <span className="px-1.5 py-0.5 bg-sage/10 text-sage text-[9px] font-bold rounded uppercase tracking-wider">Current Time</span>
+              <p className="text-clay text-sm font-bold tracking-widest uppercase">
+                {format(new Date(), 'EEEE, MMMM do, yyyy')} | {new Date().toISOString().split('T')[1].slice(0, 5)} GMT/UTC
+              </p>
+            </div>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="px-1.5 py-0.5 bg-clay/10 text-clay text-[9px] font-bold rounded uppercase tracking-wider">24H Window</span>
+              <p className="text-[10px] text-clay/70 font-medium tracking-widest uppercase">
+                {format(new Date(new Date().getTime() - 24 * 60 * 60 * 1000), 'HH:mm')} - {format(new Date(), 'HH:mm')} GMT/UTC
+              </p>
+            </div>
+            <p className="text-[9px] text-clay/40 font-bold tracking-widest uppercase mt-2 border-l-2 border-sage/20 pl-2">
+              Sudden & Tragic Fatalities Only • No Natural Deaths
             </p>
           </div>
         </div>

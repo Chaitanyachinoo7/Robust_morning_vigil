@@ -42,9 +42,10 @@ export async function getGlobalFatalitySummary(): Promise<GlobalVigilSummary> {
     6. STRICTLY EXCLUDE natural deaths, passings due to old age, or deaths from long-term chronic illnesses. This app is for monitoring sudden, tragic, or preventable global fatalities.
     
     ROPE IN NEWS FROM EVERY NOOK AND CORNER:
-    - Crime & Homicide (stabbings, shootings, violent theft)
+    - MANDATORY SOURCES TO CHECK: News18 World, WION, DW News, NHK World, CBS News, ABC Australia, Firstpost, Russia Today (RT).
+    - Crime & Homicide (stabbings, shootings, violent theft - EXCLUDE any incidents with terrorist or extremist motives).
     - Accidents (Road, Rail, Air, Maritime, Industrial)
-    - Terrorist Attacks & Armed Conflicts (New casualties only)
+    - Terrorist Attacks & Armed Conflicts (ALL incidents with terrorist, extremist, or insurgent motives MUST be categorized here).
     - Natural Calamities (New reports only)
     - Disease Outbreaks (New daily tolls only)
     
