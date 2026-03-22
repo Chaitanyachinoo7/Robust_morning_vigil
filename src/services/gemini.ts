@@ -18,28 +18,40 @@ export interface GlobalVigilSummary {
 
 export async function getGlobalFatalitySummary(): Promise<GlobalVigilSummary> {
   const now = new Date();
+  const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
   const nowISO = now.toISOString();
+  const startTimeISO = startTime.toISOString();
   const nowUTC = now.toUTCString();
+  const startTimeUTC = startTime.toUTCString();
   
   const prompt = `
-    CURRENT UTC TIME: ${nowUTC}.
-    STRICT SEARCH WINDOW: Last 24 hours (since ${nowISO}).
+    STRICT TEMPORAL PARAMETERS:
+    - CURRENT DATE: March 22, 2026
+    - CURRENT TIME (END): ${nowUTC} (${nowISO})
+    - START TIME (24H AGO): ${startTimeUTC} (${startTimeISO})
     
-    Perform an exhaustive search of global news agencies (international, national, and local/regional) for reports of fatalities occurring strictly within this 24-hour window in MARCH 2026.
+    TASK: Perform an exhaustive search of global news agencies for reports of fatalities occurring STICKTLY within this 24-hour window in the year 2026.
     
-    You must "rope in" news from every nook and corner of the world, covering:
-    1. Crime & Homicide (including specific reports of stabbings, shootings, and violent theft)
-    2. Accidents (Road, Rail, Air, Maritime, and Industrial)
-    3. Terrorist Attacks & Armed Conflicts
-    4. Natural Calamities (Floods, Storms, Earthquakes, Landslides)
-    5. Disease Outbreaks & Health Emergencies (Significant daily death tolls or new outbreak fatalities)
+    STRICT EXCLUSION RULES:
+    1. DO NOT include any event that occurred before ${startTimeISO}.
+    2. DO NOT include any data from 2025 or earlier. All results MUST be from March 2026.
+    3. DO NOT include "ongoing" death tolls unless there are specific NEW fatalities reported in the last 24 hours.
+    4. DO NOT include historical data or summaries of past weeks/months.
+    5. VERIFY the publication timestamp of every source. If it was published before ${startTimeISO}, DISCARD IT.
+    6. STRICTLY EXCLUDE natural deaths, passings due to old age, or deaths from long-term chronic illnesses. This app is for monitoring sudden, tragic, or preventable global fatalities.
+    
+    ROPE IN NEWS FROM EVERY NOOK AND CORNER:
+    - Crime & Homicide (stabbings, shootings, violent theft)
+    - Accidents (Road, Rail, Air, Maritime, Industrial)
+    - Terrorist Attacks & Armed Conflicts (New casualties only)
+    - Natural Calamities (New reports only)
+    - Disease Outbreaks (New daily tolls only)
     
     For each category, provide:
-    - An estimated fatality count based on aggregated reports.
+    - An estimated fatality count based on aggregated reports from the LAST 24 HOURS ONLY.
     - A concise summary of the major incidents.
     - Direct links to the reporting news agencies (prioritize diverse regional sources).
-    
-    IMPORTANT: Ensure all data is strictly from the last 24 hours of the present time in 2026. Do not include historical data.
   `;
 
   const response = await ai.models.generateContent({

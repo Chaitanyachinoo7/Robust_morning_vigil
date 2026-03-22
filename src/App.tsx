@@ -145,9 +145,17 @@ export default function App() {
       <header className="flex justify-between items-start mb-4">
         <div>
           <h1 className="serif text-4xl font-medium text-sage italic">Global Morning Vigil</h1>
-          <p className="text-clay text-sm font-medium tracking-widest uppercase mt-1">
-            {format(new Date(), 'EEEE, MMMM do, yyyy')} | {new Date().toISOString().split('T')[1].slice(0, 5)} UTC
-          </p>
+          <div className="flex flex-col mt-1">
+            <p className="text-clay text-sm font-medium tracking-widest uppercase">
+              {format(new Date(), 'EEEE, MMMM do, yyyy')} | {new Date().toISOString().split('T')[1].slice(0, 5)} UTC
+            </p>
+            <p className="text-[10px] text-clay/60 font-medium tracking-widest uppercase mt-0.5">
+              Monitoring Window: {format(new Date(new Date().getTime() - 24 * 60 * 60 * 1000), 'HH:mm')} - {format(new Date(), 'HH:mm')} UTC
+            </p>
+            <p className="text-[9px] text-clay/40 font-bold tracking-widest uppercase mt-0.5">
+              Sudden & Tragic Fatalities Only
+            </p>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="w-12 h-12 rounded-full bg-warm flex items-center justify-center text-sage shadow-inner">
@@ -198,7 +206,7 @@ export default function App() {
                   >
                     <Globe className="text-clay" size={32} />
                   </motion.div>
-                  <p className="serif italic text-clay">Scanning global news agencies for the last 24 hours...</p>
+                  <p className="serif italic text-clay">Scanning global news agencies for sudden and tragic fatalities in the last 24 hours...</p>
                 </div>
               ) : summary && (
                 <>
@@ -267,7 +275,7 @@ export default function App() {
             >
               <div className="text-center max-w-md mb-4">
                 <h2 className="serif text-2xl italic text-sage mb-2">Moment of Vigil</h2>
-                <p className="text-sm text-clay">Hold space for those affected by global events in the last 24 hours.</p>
+                <p className="text-sm text-clay">Hold space for those affected by sudden and tragic global events in the last 24 hours.</p>
               </div>
               
               <div className="relative flex items-center justify-center">
@@ -403,7 +411,10 @@ export default function App() {
       {/* Footer info */}
       <footer className="mt-12 pt-8 border-t border-clay/10 text-center">
         <p className="text-[10px] text-clay uppercase tracking-[0.2em] font-medium">
-          Strictly monitoring global events from the last 24 hours
+          Strictly monitoring sudden and tragic global fatalities from the last 24 hours
+        </p>
+        <p className="text-[9px] text-clay/50 uppercase tracking-[0.1em] mt-1">
+          Excluding natural deaths and old-age passings
         </p>
       </footer>
     </div>
