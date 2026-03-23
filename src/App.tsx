@@ -71,6 +71,8 @@ const Button = ({
 export default function App() {
   const [summary, setSummary] = useState<GlobalVigilSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryTime, setRetryTime] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'timer' | 'journal'>('summary');
   
   // Timer State
@@ -85,13 +87,21 @@ export default function App() {
   });
   const [newEntry, setNewEntry] = useState('');
 
-  const fetchSummary = async () => {
+  const fetchSummary = async (force = false) => {
     setLoading(true);
+    setError(null);
+    setRetryTime(null);
     try {
-      const data = await getGlobalFatalitySummary();
+      const data = await getGlobalFatalitySummary(force);
       setSummary(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      if (err.message === 'QUOTA_EXCEEDED') {
+        setError('QUOTA_EXCEEDED');
+        setRetryTime(err.retryTime);
+      } else {
+        setError('FAILED_TO_LOAD');
+      }
     } finally {
       setLoading(false);
     }
@@ -99,14 +109,6 @@ export default function App() {
 
   useEffect(() => {
     fetchSummary();
-  }, []);
-
-  // Auto-refresh every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchSummary();
-    }, 5 * 60 * 1000); // 5 minutes
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -176,7 +178,7 @@ export default function App() {
             <Globe size={24} />
           </div>
           <button 
-            onClick={fetchSummary} 
+            onClick={() => fetchSummary(true)} 
             disabled={loading}
             className="text-[10px] text-clay hover:text-sage flex items-center gap-1 uppercase tracking-widest font-bold transition-colors"
           >
@@ -222,6 +224,24 @@ export default function App() {
                   </motion.div>
                   <p className="serif italic text-clay">Scanning global news agencies for sudden and tragic fatalities in the last 24 hours...</p>
                 </div>
+              ) : error ? (
+                <Card className="bg-clay/5 border-clay/20 py-12 flex flex-col items-center gap-4 text-center">
+                  <AlertTriangle className="text-clay" size={48} />
+                  <div className="max-w-md">
+                    <h3 className="serif text-xl italic text-sage mb-2">
+                      {error === 'QUOTA_EXCEEDED' ? 'Global Vigil Quota Reached' : 'Connection Interrupted'}
+                    </h3>
+                    <p className="text-sm text-clay leading-relaxed">
+                      {error === 'QUOTA_EXCEEDED' 
+                        ? `Our global monitoring system has reached its daily limit for search grounding. ${retryTime ? `Please retry in ${retryTime}.` : 'Please try again in a few hours when the quota resets.'}` 
+                        : 'We were unable to retrieve the latest global fatality data. Please check your connection and try again.'}
+                    </p>
+                  </div>
+                  <Button onClick={() => fetchSummary(true)} variant="secondary" className="mt-4">
+                    <RefreshCw size={16} />
+                    Retry Connection
+                  </Button>
+                </Card>
               ) : summary && (
                 <>
                   <Card className="bg-sage/5 border-sage/10">
