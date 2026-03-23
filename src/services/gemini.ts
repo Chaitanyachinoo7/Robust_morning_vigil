@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from "openai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -14,10 +15,17 @@ export interface GlobalVigilSummary {
   totalEstimated: string;
   categories: FatalityCategory[];
   overallAnalysis: string;
+  isFallback?: boolean;
 }
 
 const CACHE_KEY = 'vigil_summary_cache';
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
+const MODELS = [
+  "gemini-3-flash-preview",
+  "gemini-3.1-pro-preview",
+  "gemini-2.5-flash"
+];
 
 export async function getGlobalFatalitySummary(forceRefresh = false): Promise<GlobalVigilSummary> {
   if (!forceRefresh) {
@@ -59,7 +67,7 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - CENTRAL ASIA: AKIpress, Radio Free Europe/Radio Liberty (Central Asia).
     - ARAB WORLD: Al Jazeera, Al Arabiya, Gulf News, Arab News.
     - ASIA & SE ASIA: Channel News Asia (CNA), The Straits Times, NHK World, Bangkok Post, South China Morning Post (SCMP).
-    - AUSTRALIA & OCEANIA: ABC News Australia, The Sydney Morning Herald, Radio New Zealand.
+    - AUSTRALIA & OCEANIA: ABC News Australia, The Sydney Herald, Radio New Zealand.
     - SOUTH AMERICA: MercoPress, Buenos Aires Times, Reuters (Latin America).
     - AFRICA: Africa News, The EastAfrican, Premium Times, Daily Maverick.
     - MARITIME & OCEAN: Maritime Executive, gCaptain, IMO News.
@@ -75,69 +83,124 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY.
     - A concise summary of the major incidents.
     - Direct links to the reporting news agencies (prioritize diverse regional sources).
+    
+    RESPONSE FORMAT: JSON
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            timestamp: { type: Type.STRING },
-            totalEstimated: { type: Type.STRING },
-            overallAnalysis: { type: Type.STRING },
-            categories: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  category: { type: Type.STRING },
-                  count: { type: Type.STRING },
-                  summary: { type: Type.STRING },
-                  sources: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        title: { type: Type.STRING },
-                        url: { type: Type.STRING }
+  let lastError: any = null;
+
+  for (const modelName of MODELS) {
+    try {
+      console.log(`Attempting summary with model: ${modelName}`);
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              timestamp: { type: Type.STRING },
+              totalEstimated: { type: Type.STRING },
+              overallAnalysis: { type: Type.STRING },
+              categories: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    category: { type: Type.STRING },
+                    count: { type: Type.STRING },
+                    summary: { type: Type.STRING },
+                    sources: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          title: { type: Type.STRING },
+                          url: { type: Type.STRING }
+                        }
                       }
                     }
-                  }
-                },
-                required: ["category", "count", "summary"]
+                  },
+                  required: ["category", "count", "summary"]
+                }
               }
-            }
-          },
-          required: ["timestamp", "totalEstimated", "categories", "overallAnalysis"]
-        }
-      },
-    });
+            },
+            required: ["timestamp", "totalEstimated", "categories", "overallAnalysis"]
+          }
+        },
+      });
 
-    try {
-      const data = JSON.parse(response.text);
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-      return data;
-    } catch (e) {
-      console.error("Failed to parse Gemini response", e);
-      throw new Error("Failed to generate global summary");
-    }
-  } catch (error: any) {
-    if (error?.message?.includes("RESOURCE_EXHAUSTED") || error?.message?.includes("quota")) {
-      console.error("Gemini Quota Exceeded", error);
+      try {
+        const data = JSON.parse(response.text);
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+        return data;
+      } catch (e) {
+        console.error(`Failed to parse response from ${modelName}`, e);
+        continue; // Try next model if parsing fails
+      }
+    } catch (error: any) {
+      lastError = error;
+      const isQuotaError = error?.message?.includes("RESOURCE_EXHAUSTED") || error?.message?.includes("quota");
       
-      // Try to extract retry time
-      const retryMatch = error.message.match(/retry in ([\w\.]+)/);
-      const retryTime = retryMatch ? retryMatch[1] : null;
+      if (isQuotaError) {
+        console.warn(`Quota exceeded for ${modelName}, trying next model...`);
+        continue;
+      }
       
-      const quotaError: any = new Error("QUOTA_EXCEEDED");
-      quotaError.retryTime = retryTime;
-      throw quotaError;
+      console.error(`Error with model ${modelName}:`, error);
+      throw error; // For non-quota errors, throw immediately
     }
-    throw error;
   }
+
+  // If we get here, all Gemini models failed. Try OpenAI if available.
+  const openAIKey = process.env.OPENAI_API_KEY;
+  const isRealOpenAIKey = openAIKey && openAIKey !== "MY_OPENAI_API_KEY" && openAIKey.startsWith("sk-");
+
+  if (isRealOpenAIKey) {
+    try {
+      console.log("Attempting summary with OpenAI GPT-4o fallback...");
+      const openaiClient = new OpenAI({ apiKey: openAIKey, dangerouslyAllowBrowser: true });
+      const completion = await openaiClient.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "You are a global fatality monitoring assistant. Provide data in the requested JSON format." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      const content = completion.choices[0].message.content;
+      if (content) {
+        const data = JSON.parse(content);
+        const result = { ...data, isFallback: true };
+        console.log("OpenAI fallback successful");
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+        return result;
+      }
+    } catch (error: any) {
+      console.error("OpenAI fallback failed:", error);
+      // If OpenAI also fails, we fall through to the final error block
+      lastError = error; 
+    }
+  } else {
+    console.log("OpenAI fallback skipped: No valid API key found (key must start with 'sk-')");
+  }
+
+  // If we get here, all models failed
+  if (lastError?.message?.includes("RESOURCE_EXHAUSTED") || lastError?.message?.includes("quota") || lastError?.status === 429) {
+    console.error("All Gemini models hit quota limits", lastError);
+    
+    // Try to extract retry time from Gemini error
+    const retryMatch = lastError?.message?.match(/retry in ([\w\.]+)/) || 
+                       (lastError?.error?.message?.match(/retry in ([\w\.]+)/));
+    const retryTime = retryMatch ? retryMatch[1] : null;
+    
+    const quotaError: any = new Error("QUOTA_EXCEEDED");
+    quotaError.retryTime = retryTime;
+    throw quotaError;
+  }
+  
+  throw lastError || new Error("Failed to generate global summary after trying all models");
 }

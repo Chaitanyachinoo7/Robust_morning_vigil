@@ -257,6 +257,11 @@ export default function App() {
                           </div>
                           <span className="text-[10px] text-clay uppercase tracking-widest font-medium">
                             Updated: {format(new Date(summary.timestamp), 'HH:mm')} UTC
+                            {summary.isFallback && (
+                              <span className="ml-2 px-1.5 py-0.5 bg-violet-50 text-violet-700 border border-violet-200 rounded-sm text-[8px] font-bold tracking-widest uppercase">
+                                Fallback Mode
+                              </span>
+                            )}
                           </span>
                         </div>
                       </div>
