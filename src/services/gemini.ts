@@ -52,7 +52,7 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - CURRENT TIME (END): ${nowUTC} (${nowISO})
     - START TIME (24H AGO): ${startTimeUTC} (${startTimeISO})
     
-    TASK: Perform an exhaustive search across diverse regional news agencies for reports of fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year 2026.
+    TASK: Perform an exhaustive search across diverse regional and local news agencies, town-level bulletins, and village-level reports for fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year 2026. Include data from every city, town, and village where reports are available.
     
     STRICT EXCLUSION RULES:
     1. DO NOT include any event that occurred before ${startTimeISO}, even if it is being reported now for the first time.
@@ -62,14 +62,15 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     5. VERIFY the actual time of the incident. If the event occurred before ${startTimeISO}, DISCARD IT.
     6. STRICTLY EXCLUDE natural deaths, passings due to old age, or deaths from long-term chronic illnesses. This app is for monitoring sudden, tragic, or preventable global fatalities.
     
-    ROPE IN NEWS FROM EVERY NOOK AND CORNER (MANDATORY REGIONAL COVERAGE):
-    - PAKISTAN: Dawn, The Express Tribune, Geo News.
-    - CENTRAL ASIA: AKIpress, Radio Free Europe/Radio Liberty (Central Asia).
-    - ARAB WORLD: Al Jazeera, Al Arabiya, Gulf News, Arab News.
-    - ASIA & SE ASIA: Channel News Asia (CNA), The Straits Times, NHK World, Bangkok Post, South China Morning Post (SCMP).
-    - AUSTRALIA & OCEANIA: ABC News Australia, The Sydney Herald, Radio New Zealand.
-    - SOUTH AMERICA: MercoPress, Buenos Aires Times, Reuters (Latin America).
-    - AFRICA: Africa News, The EastAfrican, Premium Times, Daily Maverick.
+    ROPE IN NEWS FROM EVERY NOOK AND CORNER (MANDATORY REGIONAL & LOCAL COVERAGE):
+    - LOCAL & GRANULAR: Search for reports from local news agencies, town-level bulletins, and village-level reports. Include data from every city, town, and village where reports are available.
+    - PAKISTAN: Dawn, The Express Tribune, Geo News, and local Urdu/regional language news.
+    - CENTRAL ASIA: AKIpress, Radio Free Europe/Radio Liberty (Central Asia), and local state/independent news.
+    - ARAB WORLD: Al Jazeera, Al Arabiya, Gulf News, Arab News, and local Arabic news.
+    - ASIA & SE ASIA: Channel News Asia (CNA), The Straits Times, NHK World, Bangkok Post, South China Morning Post (SCMP), and local language news.
+    - AUSTRALIA & OCEANIA: ABC News Australia, The Sydney Herald, Radio New Zealand, and local community news.
+    - SOUTH AMERICA: MercoPress, Buenos Aires Times, Reuters (Latin America), and local Spanish/Portuguese news.
+    - AFRICA: Africa News, The EastAfrican, Premium Times, Daily Maverick, and local regional news.
     - MARITIME & OCEAN: Maritime Executive, gCaptain, IMO News.
     - GLOBAL MAINSTREAM: News18 World, WION, DW News, CBS News, Firstpost, RT.
     
@@ -80,9 +81,9 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - Disease Outbreaks (New fatalities occurring in the last 24h only)
     
     For each category, provide:
-    - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY.
-    - A concise summary of the major incidents.
-    - Direct links to the reporting news agencies (prioritize diverse regional sources).
+    - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY, including data from local and granular reports (towns, villages, cities).
+    - A concise summary of the major and local incidents, highlighting reports from specific towns or villages where available.
+    - Direct links to the reporting news agencies (prioritize diverse regional and local sources).
     
     RESPONSE FORMAT: JSON
   `;
