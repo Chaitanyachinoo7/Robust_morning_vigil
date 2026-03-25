@@ -134,6 +134,18 @@ export default function App() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatUTC = (date: Date | string, formatStr: string = 'HH:mm') => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (formatStr === 'HH:mm') {
+      return d.toISOString().split('T')[1].slice(0, 5);
+    }
+    if (formatStr === 'MMM d, HH:mm') {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.toISOString().split('T')[1].slice(0, 5)}`;
+    }
+    return d.toUTCString();
+  };
+
   const addEntry = () => {
     if (!newEntry.trim()) return;
     const entry = {
@@ -159,13 +171,13 @@ export default function App() {
             <div className="flex items-center gap-2">
               <span className="px-1.5 py-0.5 bg-sage/10 text-sage text-[9px] font-bold rounded uppercase tracking-wider">Current Time</span>
               <p className="text-clay text-sm font-bold tracking-widest uppercase">
-                {format(new Date(), 'EEEE, MMMM do, yyyy')} | {new Date().toISOString().split('T')[1].slice(0, 5)} GMT/UTC
+                {formatUTC(new Date(), 'MMM d, HH:mm')} GMT/UTC
               </p>
             </div>
             <div className="flex items-center gap-2 mt-1.5">
               <span className="px-1.5 py-0.5 bg-clay/10 text-clay text-[9px] font-bold rounded uppercase tracking-wider">24H Window</span>
               <p className="text-[10px] text-clay/70 font-medium tracking-widest uppercase">
-                {format(new Date(new Date().getTime() - 24 * 60 * 60 * 1000), 'HH:mm')} - {format(new Date(), 'HH:mm')} GMT/UTC
+                {formatUTC(new Date(new Date().getTime() - 24 * 60 * 60 * 1000), 'MMM d, HH:mm')} - {formatUTC(new Date(), 'MMM d, HH:mm')} GMT/UTC
               </p>
             </div>
             <p className="text-[9px] text-clay/40 font-bold tracking-widest uppercase mt-2 border-l-2 border-sage/20 pl-2">
@@ -256,7 +268,7 @@ export default function App() {
                             {summary.totalEstimated}
                           </div>
                           <span className="text-[10px] text-clay uppercase tracking-widest font-medium">
-                            Updated: {format(new Date(summary.timestamp), 'HH:mm')} UTC
+                            Window: {formatUTC(new Date(new Date(summary.timestamp).getTime() - 24 * 60 * 60 * 1000), 'MMM d, HH:mm')} - {formatUTC(summary.timestamp, 'MMM d, HH:mm')} UTC
                             {summary.isFallback && (
                               <span className="ml-2 px-1.5 py-0.5 bg-violet-50 text-violet-700 border border-violet-200 rounded-sm text-[8px] font-bold tracking-widest uppercase">
                                 Fallback Mode
@@ -280,25 +292,55 @@ export default function App() {
                           </div>
                           <p className="text-sm text-ink/70 flex-1">{cat.summary}</p>
                           {cat.sources && cat.sources.length > 0 && (
-                            <div className="pt-2 border-t border-clay/10 flex flex-wrap gap-2">
-                              {cat.sources.map((src, sIdx) => (
-                                <a 
-                                  key={sIdx} 
-                                  href={src.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-[10px] text-sage hover:underline flex items-center gap-1"
-                                >
-                                  <ExternalLink size={8} />
-                                  {src.title}
-                                </a>
-                              ))}
+                            <div className="pt-2 border-t border-clay/10">
+                              <span className="text-[8px] uppercase tracking-widest text-clay/60 block mb-1">Reported by:</span>
+                              <div className="flex flex-wrap gap-2">
+                                {cat.sources.map((src, sIdx) => (
+                                  <a 
+                                    key={sIdx} 
+                                    href={src.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
+                                  >
+                                    <ExternalLink size={8} />
+                                    {src.title}
+                                  </a>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </Card>
                       </div>
                     ))}
                   </div>
+
+                  {summary.groundingSources && summary.groundingSources.length > 0 && (
+                    <Card className="bg-paper border-clay/20">
+                      <div className="flex items-center gap-2 text-clay mb-4">
+                        <Globe size={14} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Verified Search Grounding Sources</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+                        {summary.groundingSources.map((src, idx) => (
+                          <a 
+                            key={idx} 
+                            href={src.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-ink/60 hover:text-sage transition-colors flex items-start gap-2 group"
+                          >
+                            <div className="w-1 h-1 rounded-full bg-clay/40 mt-1.5 group-hover:bg-sage transition-colors" />
+                            <span className="flex-1 line-clamp-1">{src.title}</span>
+                            <ExternalLink size={10} className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </a>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-[9px] text-clay/60 italic">
+                        * These sources were used by the AI to ground its analysis in real-time search results.
+                      </p>
+                    </Card>
+                  )}
                 </>
               )}
             </motion.div>

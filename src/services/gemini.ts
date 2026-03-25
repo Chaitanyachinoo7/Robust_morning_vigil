@@ -16,6 +16,7 @@ export interface GlobalVigilSummary {
   categories: FatalityCategory[];
   overallAnalysis: string;
   isFallback?: boolean;
+  groundingSources?: { title: string; url: string }[];
 }
 
 const CACHE_KEY = 'vigil_summary_cache';
@@ -48,9 +49,10 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
   
   const prompt = `
     STRICT TEMPORAL PARAMETERS:
-    - CURRENT DATE: March 23, 2026
+    - CURRENT DATE: ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
     - CURRENT TIME (END): ${nowUTC} (${nowISO})
     - START TIME (24H AGO): ${startTimeUTC} (${startTimeISO})
+    - THE 24-HOUR WINDOW IS DEFINED AS: From ${startTimeUTC} to ${nowUTC}.
     
     TASK: Perform an exhaustive search across diverse regional and local news agencies, town-level bulletins, and village-level reports for fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year 2026. Include data from every city, town, and village where reports are available.
     
@@ -83,7 +85,8 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     For each category, provide:
     - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY, including data from local and granular reports (towns, villages, cities).
     - A concise summary of the major and local incidents, highlighting reports from specific towns or villages where available.
-    - Direct links to the reporting news agencies (prioritize diverse regional and local sources).
+    - Direct, valid, and live article URLs to the reporting news agencies (prioritize diverse regional and local sources). 
+    - CRITICAL: DO NOT hallucinate URLs. Only provide URLs that you have actually found in the search results. If a specific article URL is not found, provide the most relevant live page URL from that agency. Ensure the URLs are not broken (no 404s).
     
     RESPONSE FORMAT: JSON
   `;
@@ -135,8 +138,24 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
 
       try {
         const data = JSON.parse(response.text);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-        return data;
+        
+        // Extract grounding sources from the response if available
+        const groundingSources: { title: string; url: string }[] = [];
+        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (chunks) {
+          chunks.forEach((chunk: any) => {
+            if (chunk.web && chunk.web.uri && chunk.web.title) {
+              groundingSources.push({
+                title: chunk.web.title,
+                url: chunk.web.uri
+              });
+            }
+          });
+        }
+        
+        const result = { ...data, groundingSources };
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+        return result;
       } catch (e) {
         console.error(`Failed to parse response from ${modelName}`, e);
         continue; // Try next model if parsing fails
