@@ -5,11 +5,11 @@
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Inter", sans-serif;
   
-  --color-paper: #fdfcf8;
-  --color-ink: #2c2c2c;
-  --color-sage: #6b705c;
-  --color-clay: #b7b7a4;
-  --color-warm: #ffe8d6;
+  --color-paper: #0a1a12;
+  --color-ink: #f0f7f4;
+  --color-sage: #a3b18a;
+  --color-clay: #588157;
+  --color-warm: #1b3022;
 }
 
 body {

@@ -27,7 +27,7 @@ function cn(...inputs: ClassValue[]) {
 // --- Components ---
 
 const Card = ({ children, className }: { children: ReactNode; className?: string }) => (
-  <div className={cn("bg-white/50 backdrop-blur-sm border border-clay/20 rounded-3xl p-6 shadow-sm", className)}>
+  <div className={cn("bg-warm/5 backdrop-blur-sm border border-clay/10 rounded-3xl p-6 shadow-sm", className)}>
     {children}
   </div>
 );
@@ -46,8 +46,8 @@ const Button = ({
   disabled?: boolean;
 }) => {
   const variants = {
-    primary: "bg-sage text-white hover:bg-sage/90 shadow-md",
-    secondary: "bg-warm text-ink hover:bg-warm/80",
+    primary: "bg-sage text-paper hover:bg-sage/90 shadow-md",
+    secondary: "bg-warm text-ink hover:bg-warm/80 border border-clay/20",
     ghost: "bg-transparent hover:bg-clay/10 text-sage"
   };
   
@@ -186,7 +186,7 @@ export default function App() {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="w-12 h-12 rounded-full bg-warm flex items-center justify-center text-sage shadow-inner">
+              <div className="w-12 h-12 rounded-full bg-warm/50 border border-sage/20 flex items-center justify-center text-sage shadow-inner">
             <Globe size={24} />
           </div>
           <button 
@@ -208,7 +208,7 @@ export default function App() {
             onClick={() => setActiveTab(tab)}
             className={cn(
               "px-6 py-2 rounded-full text-sm font-medium transition-all capitalize",
-              activeTab === tab ? "bg-white text-sage shadow-sm" : "text-clay hover:text-sage"
+              activeTab === tab ? "bg-sage text-paper shadow-sm" : "text-clay hover:text-sage"
             )}
           >
             {tab === 'summary' ? 'Global Summary' : tab}
@@ -270,7 +270,7 @@ export default function App() {
                           <span className="text-[10px] text-clay uppercase tracking-widest font-medium">
                             Window: {formatUTC(new Date(new Date(summary.timestamp).getTime() - 24 * 60 * 60 * 1000), 'MMM d, HH:mm')} - {formatUTC(summary.timestamp, 'MMM d, HH:mm')} UTC
                             {summary.isFallback && (
-                              <span className="ml-2 px-1.5 py-0.5 bg-violet-50 text-violet-700 border border-violet-200 rounded-sm text-[8px] font-bold tracking-widest uppercase">
+                              <span className="ml-2 px-1.5 py-0.5 bg-violet-900/30 text-violet-300 border border-violet-500/30 rounded-sm text-[8px] font-bold tracking-widest uppercase">
                                 Fallback Mode
                               </span>
                             )}
@@ -418,7 +418,7 @@ export default function App() {
                     }}
                     className={cn(
                       "px-4 py-1 rounded-full text-xs font-medium border transition-all",
-                      initialTime === mins * 60 ? "bg-sage border-sage text-white" : "border-clay/30 text-clay hover:border-clay"
+                      initialTime === mins * 60 ? "bg-sage border-sage text-paper" : "border-clay/30 text-clay hover:border-clay"
                     )}
                   >
                     {mins}m
