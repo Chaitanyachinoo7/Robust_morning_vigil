@@ -234,7 +234,7 @@ export default function App() {
                   >
                     <Globe className="text-clay" size={32} />
                   </motion.div>
-                  <p className="serif italic text-clay">Scanning global news agencies for sudden and tragic fatalities in the last 24 hours...</p>
+                  <p className="serif italic text-clay">Scanning global and national news agencies, YouTube, and official news handles for sudden and tragic fatalities in the last 24 hours...</p>
                 </div>
               ) : error ? (
                 <Card className="bg-clay/5 border-clay/20 py-12 flex flex-col items-center gap-4 text-center">

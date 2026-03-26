@@ -65,6 +65,8 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     6. STRICTLY EXCLUDE natural deaths, passings due to old age, or deaths from long-term chronic illnesses. This app is for monitoring sudden, tragic, or preventable global fatalities.
     
     ROPE IN NEWS FROM EVERY NOOK AND CORNER (MANDATORY REGIONAL & LOCAL COVERAGE):
+    - NATIONAL & OFFICIAL HANDLES: Search for reports from official national news handles, primary state broadcasters, and verified social media accounts of major news organizations (e.g., BBC, CNN, NDTV, Reuters, AP, and specific national broadcasters for every country).
+    - VIDEO & SOCIAL: Search YouTube for recent news clips, breaking news reports, and verified citizen journalism regarding sudden fatalities. Look for channels like WION, Al Jazeera English, South China Morning Post, and local news broadcasters' YouTube handles.
     - LOCAL & GRANULAR: Search for reports from local news agencies, town-level bulletins, and village-level reports. Include data from every city, town, and village where reports are available.
     - PAKISTAN: Dawn, The Express Tribune, Geo News, and local Urdu/regional language news.
     - CENTRAL ASIA: AKIpress, Radio Free Europe/Radio Liberty (Central Asia), and local state/independent news.
