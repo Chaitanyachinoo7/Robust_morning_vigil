@@ -54,11 +54,11 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - START TIME (24H AGO): ${startTimeUTC} (${startTimeISO})
     - THE 24-HOUR WINDOW IS DEFINED AS: From ${startTimeUTC} to ${nowUTC}.
     
-    TASK: Perform an exhaustive search across diverse regional and local news agencies, town-level bulletins, and village-level reports for fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year 2026. Include data from every city, town, and village where reports are available.
+    TASK: Perform an exhaustive search across diverse regional and local news agencies, town-level bulletins, and village-level reports for fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year ${now.getFullYear()}. Include data from every city, town, and village where reports are available.
     
     STRICT EXCLUSION RULES:
     1. DO NOT include any event that occurred before ${startTimeISO}, even if it is being reported now for the first time.
-    2. DO NOT include any data from 2025 or earlier. All results MUST be from March 2026.
+    2. DO NOT include any data from previous years. All results MUST be from ${now.toLocaleString('en-US', { month: 'long' })} ${now.getFullYear()}.
     3. DO NOT include "ongoing" death tolls unless there are specific NEW fatalities that OCCURRED in the last 24 hours.
     4. DO NOT include historical data or summaries of past weeks/months.
     5. VERIFY the actual time of the incident. If the event occurred before ${startTimeISO}, DISCARD IT.
@@ -77,6 +77,7 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - AFRICA: Africa News, The EastAfrican, Premium Times, Daily Maverick, and local regional news.
     - MARITIME & OCEAN: Maritime Executive, gCaptain, IMO News.
     - GLOBAL MAINSTREAM: News18 World, WION, DW News, CBS News, Firstpost, RT.
+    - NORTH AMERICA & LOCAL US: KKTV 11 News (Colorado), WGN News (Chicago), local CBS/NBC/ABC/FOX affiliates, and regional news handles.
     
     - Crime & Homicide (stabbings, shootings, violent theft - EXCLUDE any incidents with terrorist or extremist motives).
     - Accidents (Road, Rail, Air, Maritime, Industrial)
