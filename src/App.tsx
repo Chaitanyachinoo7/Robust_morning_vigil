@@ -303,8 +303,17 @@ export default function App() {
                                     rel="noopener noreferrer"
                                     className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
                                   >
-                                    <ExternalLink size={8} />
-                                    {src.title}
+                                    <div className="flex flex-col">
+                                      <span className="flex items-center gap-1">
+                                        <ExternalLink size={8} />
+                                        {src.title}
+                                      </span>
+                                      {src.date && (
+                                        <span className="text-[7px] text-clay/60 border-t border-clay/5 mt-0.5 pt-0.5">
+                                          Reported: {src.date}
+                                        </span>
+                                      )}
+                                    </div>
                                   </a>
                                 ))}
                               </div>

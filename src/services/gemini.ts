@@ -7,7 +7,8 @@ export interface FatalityCategory {
   category: string;
   count: string;
   summary: string;
-  sources: { title: string; url: string }[];
+  verifiedYear: number; // Must be the current year
+  sources: { title: string; url: string; date?: string }[];
 }
 
 export interface GlobalVigilSummary {
@@ -58,11 +59,17 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     
     STRICT EXCLUSION RULES:
     1. DO NOT include any event that occurred before ${startTimeISO}, even if it is being reported now for the first time.
-    2. DO NOT include any data from previous years. All results MUST be from ${now.toLocaleString('en-US', { month: 'long' })} ${now.getFullYear()}.
-    3. DO NOT include "ongoing" death tolls unless there are specific NEW fatalities that OCCURRED in the last 24 hours.
-    4. DO NOT include historical data or summaries of past weeks/months.
-    5. VERIFY the actual time of the incident. If the event occurred before ${startTimeISO}, DISCARD IT.
-    6. STRICTLY EXCLUDE natural deaths, passings due to old age, or deaths from long-term chronic illnesses. This app is for monitoring sudden, tragic, or preventable global fatalities.
+    2. YEAR LOCK: You are strictly forbidden from including results from any year other than ${now.getFullYear()}. Any event mentioning a previous year (e.g., ${now.getFullYear() - 1}, ${now.getFullYear() - 2}, etc.) MUST be discarded immediately.
+    3. MONTH/DAY LOCK: All results MUST be from ${now.toLocaleString('en-US', { month: 'long' })} ${now.getDate()}, ${now.getFullYear()} or ${startTime.toLocaleString('en-US', { month: 'long' })} ${startTime.getDate()}, ${now.getFullYear()}.
+    4. NO HISTORICAL DATA: Discard all "On this day," "Anniversary," "Archive," or "Flashback" reports. 
+    5. NO ONGOING TOTALS: Do not include "ongoing" death tolls unless there are specific NEW fatalities that OCCURRED in the last 24 hours.
+    6. VERIFY PUBLICATION DATE: Check the date of the news article or YouTube video. If it was published before the last 24 hours, it is likely historical and MUST be discarded.
+    7. EXCLUDE NATURAL DEATHS: Strictly exclude natural deaths, old age passings, or chronic illness deaths. Monitor only sudden, tragic, or preventable fatalities.
+
+    YEAR AND DATE VERIFICATION STEP:
+    - For every incident you find, you MUST verify the year. If it is any year prior to ${now.getFullYear()}, it is a CRITICAL ERROR to include it.
+    - You MUST provide a "verifiedYear" for each category, which MUST be ${now.getFullYear()}.
+    - In the "sources" list, for each link, include the "date" you found for that report if available.
     
     ROPE IN NEWS FROM EVERY NOOK AND CORNER (MANDATORY REGIONAL & LOCAL COVERAGE):
     - NATIONAL & OFFICIAL HANDLES: Search for reports from official national news handles, primary state broadcasters, and verified social media accounts of major news organizations (e.g., BBC, CNN, NDTV, Reuters, AP, and specific national broadcasters for every country).
@@ -79,11 +86,11 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - GLOBAL MAINSTREAM: News18 World, WION, DW News, CBS News, Firstpost, RT.
     - NORTH AMERICA & LOCAL US: KKTV 11 News (Colorado), WGN News (Chicago), local CBS/NBC/ABC/FOX affiliates, and regional news handles.
     
-    - Crime & Homicide (stabbings, shootings, violent theft - EXCLUDE any incidents with terrorist or extremist motives).
-    - Accidents (Road, Rail, Air, Maritime, Industrial)
-    - Terrorist Attacks & Armed Conflicts (ALL incidents with terrorist, extremist, or insurgent motives MUST be categorized here).
-    - Natural Calamities (Incidents occurring in the last 24h only)
-    - Disease Outbreaks (New fatalities occurring in the last 24h only)
+    - Crime & Homicide (stabbings, shootings, violent theft that occurred in ${now.getFullYear()} - EXCLUDE any incidents with terrorist or extremist motives).
+    - Accidents (Road, Rail, Air, Maritime, Industrial accidents that occurred in ${now.getFullYear()})
+    - Terrorist Attacks & Armed Conflicts (ALL incidents with terrorist, extremist, or insurgent motives in ${now.getFullYear()} MUST be categorized here).
+    - Natural Calamities (Incidents occurring in the last 24h of ${now.getFullYear()} only)
+    - Disease Outbreaks (New fatalities occurring in the last 24h of ${now.getFullYear()} only)
     
     For each category, provide:
     - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY, including data from local and granular reports (towns, villages, cities).
@@ -92,6 +99,8 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - CRITICAL: DO NOT hallucinate URLs. Only provide URLs that you have actually found in the search results. If a specific article URL is not found, provide the most relevant live page URL from that agency. Ensure the URLs are not broken (no 404s).
     
     RESPONSE FORMAT: JSON
+    
+    SELF-CORRECTION CHECK: Before generating the JSON, verify every single incident. If an incident is from a previous year (before ${now.getFullYear()}) or any time outside the last 24 hours of ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}, YOU MUST DELETE IT FROM YOUR RESULT. Accuracy of the year ${now.getFullYear()} is your absolute priority.
   `;
 
   let lastError: any = null;
@@ -119,18 +128,20 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
                     category: { type: Type.STRING },
                     count: { type: Type.STRING },
                     summary: { type: Type.STRING },
+                    verifiedYear: { type: Type.NUMBER },
                     sources: {
                       type: Type.ARRAY,
                       items: {
                         type: Type.OBJECT,
                         properties: {
                           title: { type: Type.STRING },
-                          url: { type: Type.STRING }
+                          url: { type: Type.STRING },
+                          date: { type: Type.STRING }
                         }
                       }
                     }
                   },
-                  required: ["category", "count", "summary"]
+                  required: ["category", "count", "summary", "verifiedYear"]
                 }
               }
             },
@@ -140,7 +151,24 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
       });
 
       try {
-        const data = JSON.parse(response.text);
+        const data = JSON.parse(response.text) as GlobalVigilSummary;
+        
+        // --- PROGRAMMATIC FILTERING ---
+        // Final safety net: filter out any categories that the AI accidentally included from the wrong year
+        const currentYear = new Date().getFullYear();
+        data.categories = data.categories.filter(cat => {
+          const isCorrectYear = cat.verifiedYear === currentYear;
+          if (!isCorrectYear) {
+            console.warn(`Filtered out category ${cat.category} because verifiedYear ${cat.verifiedYear} !== ${currentYear}`);
+          }
+          return isCorrectYear;
+        });
+
+        // Recalculate total if we filtered something out
+        if (data.categories.length === 0) {
+          data.totalEstimated = "0 (Filtered: No recent year matches)";
+          data.overallAnalysis = "No sudden fatalities were found within the strictly monitored 24-hour window for the current year.";
+        }
         
         // Extract grounding sources from the response if available
         const groundingSources: { title: string; url: string }[] = [];
