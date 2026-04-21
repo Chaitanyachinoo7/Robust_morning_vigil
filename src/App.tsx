@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { getGlobalFatalitySummary, type GlobalVigilSummary } from './services/gemini';
+import { AmbientSounds } from './components/AmbientSounds';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -185,18 +186,21 @@ export default function App() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-              <div className="w-12 h-12 rounded-full bg-warm/50 border border-sage/20 flex items-center justify-center text-sage shadow-inner">
-            <Globe size={24} />
+        <div className="flex flex-col items-end gap-3">
+          <AmbientSounds />
+          <div className="flex flex-col items-end gap-2">
+            <div className="w-10 h-10 rounded-full bg-warm/50 border border-sage/20 flex items-center justify-center text-sage shadow-inner">
+              <Globe size={20} />
+            </div>
+            <button 
+              onClick={() => fetchSummary(true)} 
+              disabled={loading}
+              className="text-[10px] text-clay hover:text-sage flex items-center gap-1 uppercase tracking-widest font-bold transition-colors"
+            >
+              <RefreshCw size={10} className={cn(loading && "animate-spin")} />
+              Refresh Data
+            </button>
           </div>
-          <button 
-            onClick={() => fetchSummary(true)} 
-            disabled={loading}
-            className="text-[10px] text-clay hover:text-sage flex items-center gap-1 uppercase tracking-widest font-bold transition-colors"
-          >
-            <RefreshCw size={10} className={cn(loading && "animate-spin")} />
-            Refresh Data
-          </button>
         </div>
       </header>
 
