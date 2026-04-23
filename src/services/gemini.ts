@@ -72,9 +72,12 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - In the "sources" list, for each link, include the "date" you found for that report if available.
     
     ROPE IN NEWS FROM EVERY NOOK AND CORNER (MANDATORY REGIONAL & LOCAL COVERAGE):
+    - MULTILINGUAL INTELLIGENCE: You MUST search in native languages (Russian, Chinese, Arabic, Spanish, Urdu, etc.) to capture local town and village reports that may not yet be translated to English. Translate these findings into English for the summary.
     - NATIONAL & OFFICIAL HANDLES: Search for reports from official national news handles, primary state broadcasters, and verified social media accounts of major news organizations (e.g., BBC, CNN, NDTV, Reuters, AP, and specific national broadcasters for every country).
     - VIDEO & SOCIAL: Search YouTube for recent news clips, breaking news reports, and verified citizen journalism regarding sudden fatalities. Look for channels like WION, Al Jazeera English, South China Morning Post, and local news broadcasters' YouTube handles.
     - LOCAL & GRANULAR: Search for reports from local news agencies, town-level bulletins, and village-level reports. Include data from every city, town, and village where reports are available.
+    - RUSSIA & CIS: TASS, RIA Novosti, Interfax, RT, and local regional Russian-language news.
+    - CHINA: Xinhua, Global Times, People's Daily, South China Morning Post (SCMP), and local provincial news bulletins in Mandarin.
     - PAKISTAN: Dawn, The Express Tribune, Geo News, and local Urdu/regional language news.
     - CENTRAL ASIA: AKIpress, Radio Free Europe/Radio Liberty (Central Asia), and local state/independent news.
     - ARAB WORLD: Al Jazeera, Al Arabiya, Gulf News, Arab News, and local Arabic news.
