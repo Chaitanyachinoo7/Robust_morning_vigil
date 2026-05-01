@@ -20,19 +20,19 @@ const AMBIENT_SOUNDS = [
   { 
     id: 'rain', 
     name: 'Gentle Rain', 
-    url: 'https://raw.githubusercontent.com/fedeperovano/ambient-sounds/master/public/sounds/rain.mp3', 
+    url: 'https://raw.githubusercontent.com/Ansh-Rathod/Ambient-Sounds/main/public/sounds/rain.mp3', 
     icon: CloudRain 
   },
   { 
     id: 'nature', 
     name: 'Forest', 
-    url: 'https://raw.githubusercontent.com/fedeperovano/ambient-sounds/master/public/sounds/forest.mp3', 
+    url: 'https://raw.githubusercontent.com/Ansh-Rathod/Ambient-Sounds/main/public/sounds/nature.mp3', 
     icon: TreePine 
   },
   { 
     id: 'music', 
     name: 'Calm Piano', 
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Placeholder music
+    url: 'https://raw.githubusercontent.com/Ansh-Rathod/Ambient-Sounds/main/public/sounds/piano.mp3', 
     icon: Music 
   },
 ];
@@ -42,18 +42,29 @@ export function AmbientSounds() {
   const [currentSound, setCurrentSound] = useState(AMBIENT_SOUNDS[0]);
   const [isOpen, setIsOpen] = useState(false);
   const [volume, setVolume] = useState(0.5);
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!audioRef.current) {
-      audioRef.current = new Audio(currentSound.url);
+      audioRef.current = new Audio();
       audioRef.current.loop = true;
-    } else {
-      audioRef.current.src = currentSound.url;
+      audioRef.current.onerror = () => {
+        setError("Failed to load audio source");
+        setIsPlaying(false);
+      };
     }
     
+    setError(null);
+    audioRef.current.src = currentSound.url;
+    audioRef.current.load();
+    
     if (isPlaying) {
-      audioRef.current.play().catch(e => console.error("Playback failed:", e));
+      audioRef.current.play().catch(e => {
+        if (e.name !== 'AbortError') {
+          console.error("Playback failed:", e);
+        }
+      });
     }
 
     return () => {
@@ -70,14 +81,22 @@ export function AmbientSounds() {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(e => console.error("Playback failed:", e));
+        audioRef.current.play().catch(e => {
+          if (e.name !== 'AbortError') {
+            console.error("Playback failed:", e);
+            // If it fails, we might need a user gesture, but togglePlay is a gesture.
+          }
+        });
       } else {
         audioRef.current.pause();
       }
     }
   }, [isPlaying]);
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
+  const togglePlay = () => {
+    setError(null);
+    setIsPlaying(!isPlaying);
+  };
 
   return (
     <div className="relative">
@@ -97,8 +116,14 @@ export function AmbientSounds() {
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 px-2 py-1 hover:bg-clay/5 rounded-full transition-colors text-[10px] font-bold text-clay uppercase tracking-widest"
         >
-          <currentSound.icon size={12} className={cn(isPlaying && "animate-pulse")} />
-          <span className="hidden sm:inline">{currentSound.name}</span>
+          {error ? (
+            <span className="text-red-400 text-[8px] animate-pulse">Load Error</span>
+          ) : (
+            <>
+              <currentSound.icon size={12} className={cn(isPlaying && "animate-pulse")} />
+              <span className="hidden sm:inline">{currentSound.name}</span>
+            </>
+          )}
           <ChevronDown size={10} className={cn("transition-transform", isOpen && "rotate-180")} />
         </button>
       </div>

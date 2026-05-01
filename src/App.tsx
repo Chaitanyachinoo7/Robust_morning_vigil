@@ -287,45 +287,72 @@ export default function App() {
                   </Card>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {summary.categories.map((cat, idx) => (
-                      <div key={idx}>
-                        <Card className="flex flex-col h-full gap-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold uppercase tracking-widest text-clay">{cat.category}</span>
-                            <span className="text-sage font-bold">{cat.count}</span>
-                          </div>
-                          <p className="text-sm text-ink/70 flex-1">{cat.summary}</p>
-                          {cat.sources && cat.sources.length > 0 && (
-                            <div className="pt-2 border-t border-clay/10">
-                              <span className="text-[8px] uppercase tracking-widest text-clay/60 block mb-1">Reported by:</span>
-                              <div className="flex flex-wrap gap-2">
-                                {cat.sources.map((src, sIdx) => (
-                                  <a 
-                                    key={sIdx} 
-                                    href={src.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
-                                  >
-                                    <div className="flex flex-col">
-                                      <span className="flex items-center gap-1">
-                                        <ExternalLink size={8} />
-                                        {src.title}
-                                      </span>
-                                      {src.date && (
-                                        <span className="text-[7px] text-clay/60 border-t border-clay/5 mt-0.5 pt-0.5">
-                                          Reported: {src.date}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </a>
-                                ))}
+                    {summary.categories.map((cat, idx) => {
+                      const isSuicide = cat.category.toLowerCase().includes('suicide') || cat.category.toLowerCase().includes('self-harm');
+                      
+                      return (
+                        <div key={idx}>
+                          <Card className={cn(
+                            "flex flex-col h-full gap-3",
+                            isSuicide && "border-clay/30"
+                          )}>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                {isSuicide && <Heart size={12} className="text-red-400" />}
+                                <span className="text-xs font-bold uppercase tracking-widest text-clay">{cat.category}</span>
                               </div>
+                              <span className="text-sage font-bold">{cat.count}</span>
                             </div>
-                          )}
-                        </Card>
-                      </div>
-                    ))}
+                            <p className="text-sm text-ink/70 flex-1">{cat.summary}</p>
+                            
+                            {isSuicide && (
+                              <div className="mt-1 p-2 bg-paper/30 rounded-lg border border-clay/5 flex items-center justify-between gap-2">
+                                <p className="text-[8px] text-clay/70 leading-tight">
+                                  Help is available. Reach out to a crisis center.
+                                </p>
+                                <a 
+                                  href="https://www.befrienders.org/" 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-[8px] font-bold uppercase tracking-widest text-sage hover:underline whitespace-nowrap"
+                                >
+                                  Resources
+                                </a>
+                              </div>
+                            )}
+
+                            {cat.sources && cat.sources.length > 0 && (
+                              <div className="pt-2 border-t border-clay/10">
+                                <span className="text-[8px] uppercase tracking-widest text-clay/60 block mb-1">Reported by:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {cat.sources.map((src, sIdx) => (
+                                    <a 
+                                      key={sIdx} 
+                                      href={src.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="flex items-center gap-1">
+                                          <ExternalLink size={8} />
+                                          {src.title}
+                                        </span>
+                                        {src.date && (
+                                          <span className="text-[7px] text-clay/60 border-t border-clay/5 mt-0.5 pt-0.5">
+                                            Reported: {src.date}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </Card>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {summary.groundingSources && summary.groundingSources.length > 0 && (

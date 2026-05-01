@@ -30,17 +30,20 @@ const MODELS = [
 ];
 
 export async function getGlobalFatalitySummary(forceRefresh = false): Promise<GlobalVigilSummary> {
+  const now = new Date();
+  const dateKey = now.toISOString().split('T')[0] + '_' + now.getHours(); // Unique key per hour
+  const dynamicCacheKey = `${CACHE_KEY}_${dateKey}`;
+
   if (!forceRefresh) {
-    const cached = localStorage.getItem(CACHE_KEY);
+    const cached = localStorage.getItem(dynamicCacheKey);
     if (cached) {
       const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_DURATION) {
+      if (now.getTime() - timestamp < CACHE_DURATION) {
         return data;
       }
     }
   }
 
-  const now = new Date();
   const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   
   const nowISO = now.toISOString();
@@ -55,19 +58,23 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - START TIME (24H AGO): ${startTimeUTC} (${startTimeISO})
     - THE 24-HOUR WINDOW IS DEFINED AS: From ${startTimeUTC} to ${nowUTC}.
     
-    TASK: Perform an exhaustive search across diverse regional and local news agencies, town-level bulletins, and village-level reports for fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year ${now.getFullYear()}. Include data from every city, town, and village where reports are available.
+    TASK: Perform an exhaustive search across diverse regional and local news agencies, town-level bulletins, and village-level reports for fatalities where the INCIDENT ITSELF occurred STRICTLY within this 24-hour window in the year ${now.getFullYear()}. 
+    
+    SEARCH QUERY REQUIREMENT: All your search queries MUST include the terms "${now.getFullYear()}", "${now.toLocaleString('en-US', { month: 'long' })} ${now.getDate()}", "heatwave", "suicide", and "unnatural death" to avoid fetching historical results and ensure coverage of environmental fatalities.
     
     STRICT EXCLUSION RULES:
     1. DO NOT include any event that occurred before ${startTimeISO}, even if it is being reported now for the first time.
     2. YEAR LOCK: You are strictly forbidden from including results from any year other than ${now.getFullYear()}. Any event mentioning a previous year (e.g., ${now.getFullYear() - 1}, ${now.getFullYear() - 2}, etc.) MUST be discarded immediately.
-    3. MONTH/DAY LOCK: All results MUST be from ${now.toLocaleString('en-US', { month: 'long' })} ${now.getDate()}, ${now.getFullYear()} or ${startTime.toLocaleString('en-US', { month: 'long' })} ${startTime.getDate()}, ${now.getFullYear()}.
+    3. MONTH/DAY LOCK: All results MUST be from ${now.toLocaleString('en-US', { month: 'long' })} ${now.getDate()}, ${now.getFullYear()} or ${startTime.toLocaleString('en-US', { month: 'long' })} ${startTime.getDate()}, ${now.getFullYear()}. Any event from "last week", "3 days ago", or "April 20" (if today is April 27) MUST be discarded.
     4. NO HISTORICAL DATA: Discard all "On this day," "Anniversary," "Archive," or "Flashback" reports. 
     5. NO ONGOING TOTALS: Do not include "ongoing" death tolls unless there are specific NEW fatalities that OCCURRED in the last 24 hours.
-    6. VERIFY PUBLICATION DATE: Check the date of the news article or YouTube video. If it was published before the last 24 hours, it is likely historical and MUST be discarded.
+    6. VERIFY PUBLICATION DATE: Check the date of the news article or YouTube video. If it was published before the last 24 hours (i.e., before ${startTimeUTC}), it is historical and MUST be discarded.
     7. EXCLUDE NATURAL DEATHS: Strictly exclude natural deaths, old age passings, or chronic illness deaths. Monitor only sudden, tragic, or preventable fatalities.
+    8. MIRZAPUR/STALE EVENTS: There is a known stale report about a Mirzapur incident from last week—DO NOT INCLUDE IT. Discard all items that look "old" even if the website was updated recently.
 
     YEAR AND DATE VERIFICATION STEP:
     - For every incident you find, you MUST verify the year. If it is any year prior to ${now.getFullYear()}, it is a CRITICAL ERROR to include it.
+    - URL AUDIT: Inspect the source URL. If the URL contains "/2024/", "/2025/", or any previous year in its path, it is a historical article and MUST be discarded.
     - You MUST provide a "verifiedYear" for each category, which MUST be ${now.getFullYear()}.
     - In the "sources" list, for each link, include the "date" you found for that report if available.
     
@@ -92,8 +99,10 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - Crime & Homicide (stabbings, shootings, violent theft that occurred in ${now.getFullYear()} - EXCLUDE any incidents with terrorist or extremist motives).
     - Accidents (Road, Rail, Air, Maritime, Industrial accidents that occurred in ${now.getFullYear()})
     - Terrorist Attacks & Armed Conflicts (ALL incidents with terrorist, extremist, or insurgent motives in ${now.getFullYear()} MUST be categorized here).
+    - Heatwaves & Unnatural Deaths (Specific fatalities caused by extreme heat, heatwaves, or other unnatural causes not covered above, occurring in ${now.getFullYear()}).
     - Natural Calamities (Incidents occurring in the last 24h of ${now.getFullYear()} only)
     - Disease Outbreaks (New fatalities occurring in the last 24h of ${now.getFullYear()} only)
+    - Suicide & Self-Harm (Sudden fatalities across the globe related to self-inflicted harm that occurred in the last 24h of ${now.getFullYear()} only)
     
     For each category, provide:
     - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY, including data from local and granular reports (towns, villages, cities).
@@ -157,14 +166,48 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
         const data = JSON.parse(response.text) as GlobalVigilSummary;
         
         // --- PROGRAMMATIC FILTERING ---
-        // Final safety net: filter out any categories that the AI accidentally included from the wrong year
-        const currentYear = new Date().getFullYear();
+        // Final safety net: filter out any categories or sources that mention the wrong year or look stale
+        const currentYearStr = new Date().getFullYear().toString();
+        const prohibitedAgeKeywords = ['last week', 'days ago', 'weeks ago', 'month ago', 'years ago'];
+        
         data.categories = data.categories.filter(cat => {
-          const isCorrectYear = cat.verifiedYear === currentYear;
-          if (!isCorrectYear) {
-            console.warn(`Filtered out category ${cat.category} because verifiedYear ${cat.verifiedYear} !== ${currentYear}`);
+          const summaryLower = cat.summary.toLowerCase();
+          
+          // Check for forbidden age keywords in summary (except "1 day ago")
+          const hasStaleKeyword = prohibitedAgeKeywords.some(keyword => {
+            if (summaryLower.includes(keyword)) {
+              // Be careful not to block "within the last 24 hours" if it somehow matched "hours"
+              // But 'days ago' is definitely stale (>1 day)
+              return true;
+            }
+            return false;
+          });
+          if (hasStaleKeyword) return false;
+
+          // Check summary for ANY 4-digit number that is NOT the current year
+          const unauthorizedYearMatch = cat.summary.match(/\b(20\d{2})\b/g);
+          if (unauthorizedYearMatch) {
+            const hasWrongYear = unauthorizedYearMatch.some(year => year !== currentYearStr);
+            if (hasWrongYear) return false;
           }
-          return isCorrectYear;
+
+          // Per-source filtering
+          cat.sources = cat.sources.filter(src => {
+            const srcText = `${src.title} ${src.url} ${src.date || ''}`.toLowerCase();
+            
+            // Check for stale keywords in source metadata
+            const hasStaleKeywordSrc = prohibitedAgeKeywords.some(kw => srcText.includes(kw));
+            if (hasStaleKeywordSrc) return false;
+
+            const yearMatch = srcText.match(/\b(20\d{2})\b/g);
+            if (yearMatch) {
+              const hasWrongYear = yearMatch.some(year => year !== currentYearStr);
+              if (hasWrongYear) return false;
+            }
+            return true;
+          });
+
+          return cat.verifiedYear === parseInt(currentYearStr) && cat.sources.length > 0;
         });
 
         // Recalculate total if we filtered something out
@@ -188,7 +231,7 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
         }
         
         const result = { ...data, groundingSources };
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+        localStorage.setItem(dynamicCacheKey, JSON.stringify({ data: result, timestamp: now.getTime() }));
         return result;
       } catch (e) {
         console.error(`Failed to parse response from ${modelName}`, e);
@@ -230,7 +273,7 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
         const data = JSON.parse(content);
         const result = { ...data, isFallback: true };
         console.log("OpenAI fallback successful");
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+        localStorage.setItem(dynamicCacheKey, JSON.stringify({ data: result, timestamp: now.getTime() }));
         return result;
       }
     } catch (error: any) {
