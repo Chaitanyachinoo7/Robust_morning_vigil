@@ -11,16 +11,24 @@ export interface FatalityCategory {
   sources: { title: string; url: string; date?: string }[];
 }
 
+export interface ContinentData {
+  continent: string;
+  count: string;
+  summary: string;
+  sources: { title: string; url: string; date?: string }[];
+}
+
 export interface GlobalVigilSummary {
   timestamp: string;
   totalEstimated: string;
   categories: FatalityCategory[];
+  continents: ContinentData[];
   overallAnalysis: string;
   isFallback?: boolean;
   groundingSources?: { title: string; url: string }[];
 }
 
-const CACHE_KEY = 'vigil_summary_cache';
+const CACHE_KEY = 'vigil_summary_cache_v2';
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
 const MODELS = [
@@ -104,7 +112,10 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
     - Disease Outbreaks (New fatalities occurring in the last 24h of ${now.getFullYear()} only)
     - Suicide & Self-Harm (Sudden fatalities across the globe related to self-inflicted harm that occurred in the last 24h of ${now.getFullYear()} only)
     
-    For each category, provide:
+    CONTINENT CATEGORIZATION:
+    In addition to the thematic categories above, you MUST ALSO categorize ALL incidents by the seven continents: Africa, Antarctica, Asia, Europe, North America, Oceania, and South America.
+    
+    For each category and continent, provide:
     - An estimated fatality count based on incidents that OCCURRED in the LAST 24 HOURS ONLY, including data from local and granular reports (towns, villages, cities).
     - A concise summary of the major and local incidents, highlighting reports from specific towns or villages where available.
     - Direct, valid, and live article URLs to the reporting news agencies (prioritize diverse regional and local sources). 
@@ -155,9 +166,32 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
                   },
                   required: ["category", "count", "summary", "verifiedYear"]
                 }
+              },
+              continents: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    continent: { type: Type.STRING },
+                    count: { type: Type.STRING },
+                    summary: { type: Type.STRING },
+                    sources: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          title: { type: Type.STRING },
+                          url: { type: Type.STRING },
+                          date: { type: Type.STRING }
+                        }
+                      }
+                    }
+                  },
+                  required: ["continent", "count", "summary"]
+                }
               }
             },
-            required: ["timestamp", "totalEstimated", "categories", "overallAnalysis"]
+            required: ["timestamp", "totalEstimated", "categories", "continents", "overallAnalysis"]
           }
         },
       });
@@ -192,7 +226,7 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
           }
 
           // Per-source filtering
-          cat.sources = cat.sources.filter(src => {
+          cat.sources = (cat.sources || []).filter(src => {
             const srcText = `${src.title} ${src.url} ${src.date || ''}`.toLowerCase();
             
             // Check for stale keywords in source metadata
@@ -208,6 +242,20 @@ export async function getGlobalFatalitySummary(forceRefresh = false): Promise<Gl
           });
 
           return cat.verifiedYear === parseInt(currentYearStr) && cat.sources.length > 0;
+        });
+
+        // Also filter continents sources for years
+        data.continents = (data.continents || []).filter(cont => {
+          cont.sources = (cont.sources || []).filter(src => {
+            const srcText = `${src.title} ${src.url} ${src.date || ''}`.toLowerCase();
+            const yearMatch = srcText.match(/\b(20\d{2})\b/g);
+            if (yearMatch) {
+              const hasWrongYear = yearMatch.some(year => year !== currentYearStr);
+              if (hasWrongYear) return false;
+            }
+            return true;
+          });
+          return cont.sources.length > 0;
         });
 
         // Recalculate total if we filtered something out

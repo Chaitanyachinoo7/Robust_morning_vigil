@@ -21,6 +21,8 @@ import { twMerge } from 'tailwind-merge';
 import { getGlobalFatalitySummary, type GlobalVigilSummary } from './services/gemini';
 import { AmbientSounds } from './components/AmbientSounds';
 
+import { PrayerSection } from './components/PrayerSection';
+
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -75,6 +77,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [retryTime, setRetryTime] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'timer' | 'journal'>('summary');
+  const [viewMode, setViewMode] = useState<'categories' | 'continents'>('categories');
   
   // Timer State
   const [timerActive, setTimerActive] = useState(false);
@@ -282,78 +285,142 @@ export default function App() {
                         </div>
                       </div>
                     <p className="text-ink/80 leading-relaxed italic border-l-2 border-sage/20 pl-4">
-                      {summary.overallAnalysis}
-                    </p>
-                  </Card>
+              {summary.overallAnalysis}
+            </p>
+          </Card>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {summary.categories.map((cat, idx) => {
-                      const isSuicide = cat.category.toLowerCase().includes('suicide') || cat.category.toLowerCase().includes('self-harm');
-                      
-                      return (
-                        <div key={idx}>
-                          <Card className={cn(
-                            "flex flex-col h-full gap-3",
-                            isSuicide && "border-clay/30"
-                          )}>
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                {isSuicide && <Heart size={12} className="text-red-400" />}
-                                <span className="text-xs font-bold uppercase tracking-widest text-clay">{cat.category}</span>
-                              </div>
-                              <span className="text-sage font-bold">{cat.count}</span>
-                            </div>
-                            <p className="text-sm text-ink/70 flex-1">{cat.summary}</p>
-                            
-                            {isSuicide && (
-                              <div className="mt-1 p-2 bg-paper/30 rounded-lg border border-clay/5 flex items-center justify-between gap-2">
-                                <p className="text-[8px] text-clay/70 leading-tight">
-                                  Help is available. Reach out to a crisis center.
-                                </p>
-                                <a 
-                                  href="https://www.befrienders.org/" 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-[8px] font-bold uppercase tracking-widest text-sage hover:underline whitespace-nowrap"
-                                >
-                                  Resources
-                                </a>
-                              </div>
-                            )}
+          <div className="flex justify-center items-center p-1 bg-clay/5 rounded-full self-center mb-4 border border-clay/10">
+            <button 
+              onClick={() => setViewMode('categories')}
+              className={cn(
+                "text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all",
+                viewMode === 'categories' ? "bg-sage text-paper shadow-sm" : "text-clay hover:bg-clay/5"
+              )}
+            >
+              Thematic Categories
+            </button>
+            <button 
+              onClick={() => setViewMode('continents')}
+              className={cn(
+                "text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all",
+                viewMode === 'continents' ? "bg-sage text-paper shadow-sm" : "text-clay hover:bg-clay/5"
+              )}
+            >
+              Seven Continents
+            </button>
+          </div>
 
-                            {cat.sources && cat.sources.length > 0 && (
-                              <div className="pt-2 border-t border-clay/10">
-                                <span className="text-[8px] uppercase tracking-widest text-clay/60 block mb-1">Reported by:</span>
-                                <div className="flex flex-wrap gap-2">
-                                  {cat.sources.map((src, sIdx) => (
-                                    <a 
-                                      key={sIdx} 
-                                      href={src.url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
-                                    >
-                                      <div className="flex flex-col">
-                                        <span className="flex items-center gap-1">
-                                          <ExternalLink size={8} />
-                                          {src.title}
-                                        </span>
-                                        {src.date && (
-                                          <span className="text-[7px] text-clay/60 border-t border-clay/5 mt-0.5 pt-0.5">
-                                            Reported: {src.date}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {viewMode === 'categories' ? (
+              summary.categories.map((cat, idx) => {
+                const isSuicide = cat.category.toLowerCase().includes('suicide') || cat.category.toLowerCase().includes('self-harm');
+                
+                return (
+                  <div key={idx}>
+                    <Card className={cn(
+                      "flex flex-col h-full gap-3",
+                      isSuicide && "border-clay/30"
+                    )}>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          {isSuicide && <Heart size={12} className="text-red-400" />}
+                          <span className="text-xs font-bold uppercase tracking-widest text-clay">{cat.category}</span>
                         </div>
-                      );
-                    })}
+                        <span className="text-sage font-bold">{cat.count}</span>
+                      </div>
+                      <p className="text-sm text-ink/70 flex-1">{cat.summary}</p>
+                      
+                      {isSuicide && (
+                        <div className="mt-1 p-2 bg-paper/30 rounded-lg border border-clay/5 flex items-center justify-between gap-2">
+                          <p className="text-[8px] text-clay/70 leading-tight">
+                            Help is available. Reach out to a crisis center.
+                          </p>
+                          <a 
+                            href="https://www.befrienders.org/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[8px] font-bold uppercase tracking-widest text-sage hover:underline whitespace-nowrap"
+                          >
+                            Resources
+                          </a>
+                        </div>
+                      )}
+
+                      {cat.sources && cat.sources.length > 0 && (
+                        <div className="pt-2 border-t border-clay/10">
+                          <span className="text-[8px] uppercase tracking-widest text-clay/60 block mb-1">Reported by:</span>
+                          <div className="flex flex-wrap gap-2">
+                            {cat.sources.map((src, sIdx) => (
+                              <a 
+                                key={sIdx} 
+                                href={src.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="flex items-center gap-1">
+                                    <ExternalLink size={8} />
+                                    {src.title}
+                                  </span>
+                                  {src.date && (
+                                    <span className="text-[7px] text-clay/60 border-t border-clay/5 mt-0.5 pt-0.5">
+                                      Reported: {src.date}
+                                    </span>
+                                  )}
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </Card>
                   </div>
+                );
+              })
+            ) : (
+              (summary.continents || []).map((cont, idx) => (
+                <div key={idx}>
+                  <Card className="flex flex-col h-full gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold uppercase tracking-widest text-clay">{cont.continent}</span>
+                      <span className="text-sage font-bold">{cont.count}</span>
+                    </div>
+                    <p className="text-sm text-ink/70 flex-1">{cont.summary}</p>
+                    
+                    {cont.sources && cont.sources.length > 0 && (
+                      <div className="pt-2 border-t border-clay/10">
+                        <span className="text-[8px] uppercase tracking-widest text-clay/60 block mb-1">Regional Reports:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {cont.sources.map((src, sIdx) => (
+                            <a 
+                              key={sIdx} 
+                              href={src.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-sage hover:underline flex items-center gap-1 bg-sage/5 px-1.5 py-0.5 rounded-sm"
+                            >
+                              <div className="flex flex-col">
+                                <span className="flex items-center gap-1">
+                                  <ExternalLink size={8} />
+                                  {src.title}
+                                </span>
+                                {src.date && (
+                                  <span className="text-[7px] text-clay/60 border-t border-clay/5 mt-0.5 pt-0.5">
+                                    Reported: {src.date}
+                                  </span>
+                                )}
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                </div>
+              ))
+            )}
+          </div>
 
                   {summary.groundingSources && summary.groundingSources.length > 0 && (
                     <Card className="bg-paper border-clay/20">
@@ -528,6 +595,8 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+
+      <PrayerSection />
 
       {/* Footer info */}
       <footer className="mt-12 pt-8 border-t border-clay/10 text-center">
